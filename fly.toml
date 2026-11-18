@@ -20,3 +20,4 @@ primary_region = "cdg"
   memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
+
