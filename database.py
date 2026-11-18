@@ -10,7 +10,7 @@ import json
 import re
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'upssa.db')
+DB_PATH = os.environ.get('DB_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'upssa.db'))
 
 def get_connection():
     """Crée et retourne une connexion SQLite avec row_factory."""
