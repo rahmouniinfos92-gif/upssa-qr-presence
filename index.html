@@ -661,8 +661,13 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
-  <!-- 1. HTML5-QRCode Scanner Library (CDN with fallback) -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- 1. HTML5-QRCode Scanner Library (Local with CDN fallback) -->
+  <script src="js/html5-qrcode.min.js"></script>
+  <script>
+    if (typeof Html5Qrcode === 'undefined') {
+      document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');
+    }
+  </script>
 
   <!-- 2. Pure JS Offline QR Code Generator -->
   <script src="js/qrcode.min.js"></script>

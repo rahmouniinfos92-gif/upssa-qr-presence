@@ -161,9 +161,23 @@
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
             students = data;
+            const attendedList = students
+              .filter(s => s.attended && s.scanned_time)
+              .sort((a, b) => (b.scanned_at || '').localeCompare(a.scanned_at || ''));
+            if (attendedList.length > 0) {
+              scansHistory = attendedList.map(s => ({
+                id: s.id,
+                name: s.name,
+                pole: s.pole,
+                year: s.year,
+                time: s.scanned_time,
+                timestamp: s.scanned_at
+              }));
+            }
             saveData();
             updateStats();
             renderStudentsTable();
+            renderActivityFeed();
             renderWhatsAppTab();
             return;
           }
@@ -282,61 +296,118 @@
     return null;
   }
 
-  // --- Scan Engine & Pointage ---
-  function processScan(rawCode) {
+  // --- Scan Engine & Pointage (Connecté à la Base SQL temps réel) ---
+  async function processScan(rawCode, device = 'camera_scanner') {
     const now = Date.now();
     const cleanCode = normalizeCode(rawCode);
 
-    // Prevent immediate duplicate reading triggers within 1.8 seconds of same code
-    if (lastScannedCode === cleanCode && (now - lastScanTimestamp) < 1800) {
+    // Évite les déclenchements multiples trop rapides (2 secondes)
+    if (lastScannedCode === cleanCode && (now - lastScanTimestamp) < 2000) {
       return;
     }
     lastScannedCode = cleanCode;
     lastScanTimestamp = now;
 
-    const student = findStudent(cleanCode);
-    const resultBox = document.getElementById('scanResultBox');
+    let localStudent = findStudent(cleanCode);
 
-    if (!student) {
+    // 1. Enregistrement direct dans l'API SQLite (en ligne sur Fly.io / serveur HTTP)
+    if (window.location.protocol.startsWith('http')) {
+      try {
+        const resp = await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: cleanCode || rawCode, device: device })
+        });
+
+        if (resp.ok) {
+          const res = await resp.json();
+
+          if (res.status === 'success' && res.student) {
+            const s = students.find(item => item.id === res.student.id) || localStudent;
+            if (s) {
+              s.attended = 1;
+              s.scanned_at = res.student.scanned_at;
+              s.scanned_time = res.student.scanned_time;
+            }
+
+            scansHistory.unshift({
+              id: res.student.id,
+              name: res.student.name,
+              pole: res.student.pole,
+              year: res.student.year,
+              time: res.student.scanned_time,
+              timestamp: res.student.scanned_at
+            });
+            if (scansHistory.length > 50) scansHistory.pop();
+
+            saveData();
+            playSuccessSound();
+            triggerVibrate([120]);
+            renderSuccessResult(res.student);
+            updateStats();
+            renderActivityFeed();
+            renderStudentsTable();
+            showToast(`✅ Présence enregistrée dans la base SQL : ${res.student.name}`, 'success');
+            return;
+          } else if (res.status === 'duplicate' && res.student) {
+            playWarningSound();
+            triggerVibrate([150, 100, 150]);
+            renderWarningResult(res.student);
+            showToast(res.message || `⚠️ Déjà scanné : ${res.student.name}`, 'warning');
+            return;
+          } else if (res.status === 'not_found') {
+            playErrorSound();
+            triggerVibrate([300]);
+            renderErrorResult(cleanCode || rawCode);
+            showToast(`❌ Code inconnu : ${cleanCode || rawCode}`, 'error');
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Erreur appel /api/scan, passage en mode local fallback:', err);
+      }
+    }
+
+    // 2. Mode Fallback Hors-Ligne (si le backend est injoignable)
+    if (!localStudent) {
       playErrorSound();
       triggerVibrate([300]);
-      renderErrorResult(cleanCode);
-      showToast(`Code non reconnu : ${cleanCode}`, 'error');
+      renderErrorResult(cleanCode || rawCode);
+      showToast(`Code non reconnu : ${cleanCode || rawCode}`, 'error');
       return;
     }
 
-    if (student.attended) {
+    if (localStudent.attended) {
       playWarningSound();
       triggerVibrate([150, 100, 150]);
-      renderWarningResult(student);
-      showToast(`Déjà scanné : ${student.name}`, 'warning');
+      renderWarningResult(localStudent);
+      showToast(`Déjà scanné : ${localStudent.name}`, 'warning');
       return;
     }
 
-    // Success check-in!
-    student.attended = true;
-    student.scanned_at = new Date().toISOString();
-    student.scanned_time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    // Success check-in local
+    localStudent.attended = 1;
+    localStudent.scanned_at = new Date().toISOString();
+    localStudent.scanned_time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     scansHistory.unshift({
-      id: student.id,
-      name: student.name,
-      pole: student.pole,
-      year: student.year,
-      time: student.scanned_time,
-      timestamp: student.scanned_at
+      id: localStudent.id,
+      name: localStudent.name,
+      pole: localStudent.pole,
+      year: localStudent.year,
+      time: localStudent.scanned_time,
+      timestamp: localStudent.scanned_at
     });
-
     if (scansHistory.length > 50) scansHistory.pop();
 
     saveData();
     playSuccessSound();
     triggerVibrate([120]);
-    renderSuccessResult(student);
+    renderSuccessResult(localStudent);
     updateStats();
     renderActivityFeed();
     renderStudentsTable();
-    showToast(`Présence validée : ${student.name}`, 'success');
+    showToast(`Présence validée (mode local) : ${localStudent.name}`, 'success');
   }
 
   // --- Render Scan Results in UI ---
@@ -587,8 +658,11 @@
 
     const config = {
       fps: 15,
-      qrbox: { width: 220, height: 220 },
-      aspectRatio: 1.333333
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        const qrboxSize = Math.floor(minEdge * 0.75);
+        return { width: Math.max(qrboxSize, 180), height: Math.max(qrboxSize, 180) };
+      }
     };
 
     const cameraMode = selectedId ? { deviceId: { exact: selectedId } } : { facingMode: "environment" };
@@ -602,7 +676,7 @@
       cameraMode,
       config,
       (decodedText) => {
-        processScan(decodedText);
+        processScan(decodedText, 'camera_scanner');
       },
       (error) => {
         // Ignored frame scan failures (standard noise)
@@ -1161,7 +1235,7 @@
         e.preventDefault();
         const val = manualInput.value.trim();
         if (val) {
-          processScan(val);
+          processScan(val, 'manual_input');
           manualInput.value = '';
           manualInput.focus();
         }
@@ -1172,7 +1246,7 @@
         const val = manualInput.value.trim();
         if (autoSubmitCheck && autoSubmitCheck.checked) {
           if (/^\d{4}$/.test(val)) {
-            processScan(val);
+            processScan(val, 'touch_numpad');
             manualInput.value = '';
           }
         }
@@ -1310,7 +1384,7 @@
 
     scanner.scanFile(file, true)
       .then(decodedText => {
-        processScan(decodedText);
+        processScan(decodedText, 'image_file');
         scanner.clear();
       })
       .catch(err => {

@@ -242,6 +242,20 @@ def record_scan(st_id, device='web'):
     if clean_id.upper().startswith('UPSSA:'):
         clean_id = clean_id[6:].strip()
 
+    # Extraction automatique si URL complète de billet ou QR scanné
+    if '?' in clean_id and ('id=' in clean_id or 'code=' in clean_id or 'http' in clean_id):
+        try:
+            import urllib.parse
+            parsed_u = urllib.parse.urlparse(clean_id)
+            qs = urllib.parse.parse_qs(parsed_u.query)
+            extracted = qs.get('id', qs.get('code', qs.get('student', [clean_id])))[0].strip()
+            if extracted:
+                clean_id = extracted
+                if clean_id.upper().startswith('UPSSA:'):
+                    clean_id = clean_id[6:].strip()
+        except Exception:
+            pass
+
     # Recherche multi-critères : ID 4 chiffres, ancien ID, email, téléphone, ou nom exact
     cursor.execute("""
         SELECT * FROM students 
