@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>UPSSA — Système de Scan Présence QR Code</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Favicon / Touch Icon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+</head>
+<body>
+
+  <!-- Hidden temporary container for file-based QR decoding -->
+  <div id="qrImageReaderTemp" style="display: none;"></div>
+
+  <!-- Header Section -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-logo">U</div>
+        <div class="brand-text">
+          <h1>
+            UPSSA Présence
+            <span class="badge-event">Événement 2026</span>
+          </h1>
+          <p>Université Privée de Santé souss Almassira • Pointage QR Code</p>
+        </div>
+      </div>
+
+      <!-- Quick KPI ribbon in header -->
+      <div class="kpi-ribbon">
+        <div class="kpi-item">
+          <div class="kpi-val" id="kpiTotalRibbon">309</div>
+          <div class="kpi-lbl">Inscrits</div>
+        </div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item">
+          <div class="kpi-val highlight" id="kpiPresentRibbon">0 (0%)</div>
+          <div class="kpi-lbl">Présents</div>
+        </div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item">
+          <div class="kpi-val" id="kpiGalaRibbon">0/209</div>
+          <div class="kpi-lbl">Gala</div>
+        </div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item">
+          <div class="kpi-val" id="kpiTeamRibbon">0/162</div>
+          <div class="kpi-lbl">Team</div>
+        </div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item">
+          <div class="kpi-val" id="kpiTransportRibbon">0/192</div>
+          <div class="kpi-lbl">Transport</div>
+        </div>
+        <div class="kpi-divider"></div>
+        <div class="kpi-item">
+          <div class="kpi-val highlight" id="kpiWaRibbon">0/309</div>
+          <div class="kpi-lbl">WhatsApp</div>
+        </div>
+      </div>
+
+      <!-- Global Actions -->
+      <div class="header-actions">
+        <button class="btn btn-white btn-sm" id="exportCsvBtn" title="Télécharger la liste avec statut de présence">
+          📥 Exporter Excel
+        </button>
+        <button class="btn btn-outline-white btn-sm" id="resetAttendanceBtn" title="Remettre à zéro les scans">
+          🔄 Réinitialiser
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="tabs-nav">
+    <div class="tabs-container">
+      <button class="tab-btn active" data-tab="tabScanner">
+        📷 Scanner QR Code
+        <span class="tab-badge" id="tabCountPresent">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tabStudents">
+        📋 Liste des Étudiants
+        <span class="tab-badge" id="tabCountAll">309</span>
+      </button>
+      <button class="tab-btn" data-tab="tabWhatsApp">
+        📲 Envoi WhatsApp
+        <span class="tab-badge" id="tabCountWa" style="background: #25D366; color: white;">0/309</span>
+      </button>
+      <button class="tab-btn" data-tab="tabStats">
+        📊 Statistiques en direct
+      </button>
+      <button class="tab-btn" data-tab="tabBadges">
+        🎫 Badges & Billets
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- ==================== TAB 1: SCANNER & POINTAGE ==================== -->
+    <section id="tabScanner" class="tab-pane active">
+
+      <!-- Prominent Check-in Hero Card (Saisie Manuelle Code 4 chiffres OU Scan Caméra) -->
+      <div class="checkin-hero-card">
+        <div class="checkin-hero-header">
+          <div>
+            <h2><span>⚡</span> Contrôle d'Accès & Pointage des Entrées</h2>
+            <p>Deux modes au choix : <strong>Saisie manuelle du code à 4 chiffres (ex: 1001)</strong> ou <strong>Scan en direct du QR Code</strong></p>
+          </div>
+          <div class="checkin-hero-stats">
+            <span class="pulse-indicator"></span>
+            <span id="heroCheckinCount"><strong>0</strong> / 309 Présents validés</span>
+          </div>
+        </div>
+
+        <!-- Big Fast Manual Input Bar -->
+        <form id="manualScanForm" class="checkin-input-bar">
+          <div class="input-hero-group">
+            <div class="input-prefix-tag">CODE 4 CHIFFRES</div>
+            <input 
+              type="text" 
+              id="manualCodeInput" 
+              class="input-hero-field" 
+              placeholder="Ex: 1001 (ou tapez le prénom)" 
+              maxlength="20"
+              autocomplete="off"
+              autofocus>
+            <button type="submit" class="btn btn-emerald btn-hero" id="btnManualSubmit">
+              ✓ Valider Pointage (Entrée)
+            </button>
+          </div>
+
+          <div class="checkin-helper-row">
+            <label class="toggle-switch-label">
+              <input type="checkbox" id="autoSubmitCheck" checked>
+              <span>Validation instantanée dès la saisie des 4 chiffres</span>
+            </label>
+            <button type="button" class="btn-link" id="btnToggleNumpad">
+              🔢 Afficher / Masquer le Clavier Tactile (Pavé numérique)
+            </button>
+          </div>
+
+          <!-- Touch Numpad for Tablets & Mobile -->
+          <div id="touchNumpad" class="touch-numpad" style="display: none;">
+            <button type="button" class="num-key" data-key="1">1</button>
+            <button type="button" class="num-key" data-key="2">2</button>
+            <button type="button" class="num-key" data-key="3">3</button>
+            <button type="button" class="num-key" data-key="4">4</button>
+            <button type="button" class="num-key" data-key="5">5</button>
+            <button type="button" class="num-key" data-key="6">6</button>
+            <button type="button" class="num-key" data-key="7">7</button>
+            <button type="button" class="num-key" data-key="8">8</button>
+            <button type="button" class="num-key" data-key="9">9</button>
+            <button type="button" class="num-key num-clear" id="btnNumClear">⌫ Effacer</button>
+            <button type="button" class="num-key" data-key="0">0</button>
+            <button type="button" class="num-key num-submit" id="btnNumEnter">✓ Valider</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="scanner-grid">
+        
+        <!-- Left: Camera Feed & Input Options -->
+        <div class="card">
+          <div class="card-title">
+            <span>📷 Option : Lecteur Caméra QR Code</span>
+            <button class="btn btn-sm btn-outline" id="testScanBtn" title="Simuler un scan pour vérifier">
+              🎲 Test aléatoire
+            </button>
+          </div>
+
+          <!-- Video Viewport -->
+          <div class="camera-container">
+            <div id="reader"></div>
+
+            <!-- Idle placeholder before starting camera -->
+            <div id="cameraPlaceholder" class="scanner-placeholder">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+              </svg>
+              <p style="font-weight: 600; font-size: 1rem;">Caméra inactive</p>
+              <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">Cliquez sur « Démarrer le Scanner » ci-dessous pour pointer via la caméra de votre appareil.</p>
+            </div>
+
+            <!-- Reticle Overlay for Live View -->
+            <div id="scannerReticle" class="scanner-reticle" style="display: none;">
+              <div class="reticle-corner corner-tl"></div>
+              <div class="reticle-corner corner-tr"></div>
+              <div class="reticle-corner corner-bl"></div>
+              <div class="reticle-corner corner-br"></div>
+              <div class="laser-line"></div>
+            </div>
+          </div>
+
+          <!-- Camera Selection & Actions -->
+          <div class="camera-controls">
+            <select id="cameraSelect" class="camera-select" title="Choisir la caméra">
+              <option value="">Sélection de la caméra...</option>
+            </select>
+            <button class="btn btn-primary" id="startScanBtn">
+              ▶ Démarrer le Scanner
+            </button>
+            <button class="btn btn-rose" id="stopScanBtn" style="display: none;">
+              ⏹ Arrêter
+            </button>
+          </div>
+
+          <!-- Alternate Input: Drag & Drop image file -->
+          <div class="alt-inputs">
+            <div id="dragDropZone" class="drag-drop-zone">
+              📁 Glissez une photo / capture de QR code ici, ou <u>cliquez pour choisir un fichier</u>
+              <input type="file" id="qrFileInput" accept="image/*" style="display: none;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Real-time Scan Result & Recent Activity -->
+        <div class="result-container">
+          
+          <!-- Dynamic Result Box -->
+          <div id="scanResultBox">
+            <div class="result-card" style="text-align: center; color: var(--gray-500); padding: 3rem 1.5rem;">
+              <div style="font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.8;">📷</div>
+              <h3 style="color: var(--gray-800); font-weight: 700; margin-bottom: 0.25rem;">Prêt à scanner</h3>
+              <p style="font-size: 0.88rem;">Scannez le QR code d'un étudiant ou entrez son identifiant pour valider sa présence en direct.</p>
+            </div>
+          </div>
+
+          <!-- Live Activity Feed -->
+          <div class="card" style="padding: 1.25rem;">
+            <div class="card-title" style="font-size: 0.95rem; margin-bottom: 0.75rem;">
+              <span>Derniers pointages en direct</span>
+              <span style="font-size: 0.75rem; font-weight: 500; color: var(--gray-500);">Temps réel</span>
+            </div>
+            <div id="recentScansList" class="activity-feed">
+              <!-- populated dynamically by JS -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: STUDENTS LIST ==================== -->
+    <section id="tabStudents" class="tab-pane">
+      <div class="card">
+        <div class="card-title">
+          <div>
+            <span>Liste Complète des Étudiants</span>
+            <span style="font-size: 0.8rem; font-weight: 500; color: var(--gray-500); margin-left: 0.5rem;">
+              (<span id="filteredCount">309</span> affichés)
+            </span>
+          </div>
+        </div>
+
+        <!-- Filters & Search Toolbar -->
+        <div class="table-controls">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Rechercher par prénom, identifiant, email, téléphone...">
+          </div>
+
+          <div class="filter-group">
+            <select id="filterStatus" class="select-filter">
+              <option value="all">Tous les statuts</option>
+              <option value="present">✓ Présents uniquement</option>
+              <option value="absent">○ En attente uniquement</option>
+            </select>
+
+            <select id="filterPole" class="select-filter">
+              <option value="all">Tous les Pôles</option>
+              <option value="Santé">Pôle Santé</option>
+              <option value="Sciences">Pôle Sciences</option>
+              <option value="Audit">Pôle Audit</option>
+            </select>
+
+            <select id="filterYear" class="select-filter">
+              <option value="all">Toutes les Années</option>
+              <option value="1ère Année">1ère Année</option>
+              <option value="2ème Année">2ème Année</option>
+              <option value="3ème Année">3ème Année</option>
+              <option value="4ème Année">4ème Année</option>
+            </select>
+
+            <select id="filterEvent" class="select-filter">
+              <option value="all">Toutes les activités</option>
+              <option value="gala">🎟️ Gala (Oui)</option>
+              <option value="teambuilding">🏃 Teambuilding (Oui)</option>
+              <option value="transport">🚌 Transport UPSSA (Oui)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Identifiant</th>
+                <th>Étudiant</th>
+                <th>Pôle & Année</th>
+                <th>Activités</th>
+                <th>Téléphone</th>
+                <th>Statut Présence</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+              <!-- populated dynamically by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div id="tablePagination" style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between;"></div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: STATS & DASHBOARD ==================== -->
+    <section id="tabStats" class="tab-pane">
+      <div class="stats-cards-grid">
+        
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Taux de Présence Global</span>
+            <div class="stat-card-icon" style="background: #dbeafe; color: #1e40af;">👥</div>
+          </div>
+          <div class="stat-card-value" id="statTauxPresence">0%</div>
+          <div class="stat-card-sub">
+            <span id="statTotalPresents">0</span> pointés sur <span id="statTotalInscrits">309</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="barTotalPresence" style="width: 0%; background: #2563eb;"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Participants Gala</span>
+            <div class="stat-card-icon" style="background: #fef3c7; color: #b45309;">🎟️</div>
+          </div>
+          <div class="stat-card-value" id="statGalaPct">0%</div>
+          <div class="stat-card-sub">
+            <span id="statGalaCount">0 / 209</span> participants présents
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="barGala" style="width: 0%; background: #f59e0b;"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Teambuilding</span>
+            <div class="stat-card-icon" style="background: #ffedd5; color: #c2410c;">🏃</div>
+          </div>
+          <div class="stat-card-value" id="statTeamPct">0%</div>
+          <div class="stat-card-sub">
+            <span id="statTeamCount">0 / 162</span> participants présents
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="barTeam" style="width: 0%; background: #ea580c;"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Transport UPSSA (Bus)</span>
+            <div class="stat-card-icon" style="background: #e0f2fe; color: #0369a1;">🚌</div>
+          </div>
+          <div class="stat-card-value" id="statTransportPct">0%</div>
+          <div class="stat-card-sub">
+            <span id="statTransportCount">0 / 192</span> usagers présents
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="barTransport" style="width: 0%; background: #0284c7;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Breakdown by Pole -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">Présence par Pôle Universitaire</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+          
+          <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
+              <strong style="color: #0f766e; font-size: 1.05rem;">🏥 Pôle Santé</strong>
+              <span id="statPole_Santé_pct" style="font-weight: 700; color: #0f766e;">0%</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--gray-500);">Présents : <span id="statPole_Santé_count">0/265</span></div>
+            <div class="progress-bar-bg" style="margin-top: 0.5rem;">
+              <div class="progress-bar-fill" id="barPole_Santé" style="width: 0%; background: #0d9488;"></div>
+            </div>
+          </div>
+
+          <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
+              <strong style="color: #4338ca; font-size: 1.05rem;">🔬 Pôle Sciences</strong>
+              <span id="statPole_Sciences_pct" style="font-weight: 700; color: #4338ca;">0%</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--gray-500);">Présents : <span id="statPole_Sciences_count">0/34</span></div>
+            <div class="progress-bar-bg" style="margin-top: 0.5rem;">
+              <div class="progress-bar-fill" id="barPole_Sciences" style="width: 0%; background: #4f46e5;"></div>
+            </div>
+          </div>
+
+          <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
+              <strong style="color: #86198f; font-size: 1.05rem;">📊 Pôle Audit</strong>
+              <span id="statPole_Audit_pct" style="font-weight: 700; color: #86198f;">0%</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--gray-500);">Présents : <span id="statPole_Audit_count">0/10</span></div>
+            <div class="progress-bar-bg" style="margin-top: 0.5rem;">
+              <div class="progress-bar-fill" id="barPole_Audit" style="width: 0%; background: #9333ea;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: BADGES & QR CODES ==================== -->
+    <section id="tabBadges" class="tab-pane">
+      <div class="card">
+        <div class="card-title">
+          <div>
+            <span>Générateur & Planche de Badges QR</span>
+            <p style="font-size: 0.82rem; font-weight: normal; color: var(--gray-500); margin-top: 0.25rem;">
+              Générez et imprimez les badges officiels des participants avec leur QR Code d'accès personnalisé.
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="window.print()">
+            🖨️ Imprimer la sélection
+          </button>
+        </div>
+
+        <div id="batchBadgesGrid" class="badges-batch-grid print-area">
+          <!-- populated dynamically by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: WHATSAPP DISPATCH ==================== -->
+    <section id="tabWhatsApp" class="tab-pane">
+      
+      <!-- Top WhatsApp Banner -->
+      <div class="wa-banner">
+        <div>
+          <h2><span>📲</span> Centre de Diffusion WhatsApp Officiel</h2>
+          <p>
+            Envoyez la confirmation officielle avec les QR Codes générés et les Pass Digitaux pour les <strong>309 étudiants UPSSA</strong>.
+          </p>
+        </div>
+        <div class="wa-banner-actions">
+          <a href="/api/export-attendance" class="btn btn-white btn-sm" download>
+            📊 Export Présence CSV
+          </a>
+          <a href="/api/export-whatsapp" class="btn btn-white btn-sm" id="btnExportWaCsv" download="whatsapp_dispatch_list.csv">
+            📥 Télécharger CSV WhatsApp
+          </a>
+          <a href="/api/export-vcf" class="btn btn-outline-white btn-sm" download="contacts_upssa_onboard.vcf">
+            📇 Carnet Contacts VCF (309)
+          </a>
+          <button class="btn btn-white btn-sm" id="btnOpenMsgTemplate">
+            📝 Voir le Modèle de Message
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick KPI Cards for WhatsApp -->
+      <div class="stats-cards-grid" style="margin-bottom: 1.5rem;">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Messages Envoyés</span>
+            <div class="stat-card-icon" style="background: #dcfce7; color: #15803d;">✅</div>
+          </div>
+          <div class="stat-card-value" id="waSentVal" style="color: #15803d;">0 / 309</div>
+          <div class="stat-card-sub" id="waSentPct">0% de la liste envoyée</div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="waProgressBar" style="width: 0%; background: #25D366;"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">En Attente d'Envoi</span>
+            <div class="stat-card-icon" style="background: #fef3c7; color: #b45309;">⏳</div>
+          </div>
+          <div class="stat-card-value" id="waPendingVal" style="color: #b45309;">309</div>
+          <div class="stat-card-sub">Étudiants restants dans la file</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">QR Codes & Pass Générés</span>
+            <div class="stat-card-icon" style="background: #dbeafe; color: #1e40af;">🎫</div>
+          </div>
+          <div class="stat-card-value" style="color: #1e40af;">309 / 309</div>
+          <div class="stat-card-sub">Fichiers PNG sur disque & SQLite</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Transport UPSSA (Bus)</span>
+            <div class="stat-card-icon" style="background: #eff6ff; color: #2563eb;">🚌</div>
+          </div>
+          <div class="stat-card-value" style="color: #2563eb;">192</div>
+          <div class="stat-card-sub">Départ 11h30 campus inclus</div>
+        </div>
+      </div>
+
+      <!-- Express Queue / 1-Click Sequential Dispatch Card -->
+      <div class="wa-express-card" id="waExpressCard">
+        <div class="wa-express-info">
+          <div class="wa-avatar" id="expressAvatar">H</div>
+          <div>
+            <div class="wa-express-title" id="expressName">Hibat</div>
+            <div class="wa-express-sub">
+              <span id="expressPhone">📞 +212 645 737 215</span>
+              <span>•</span>
+              <span id="expressPole">Pôle Santé • 2ème Année</span>
+              <span>•</span>
+              <span id="expressTransport" class="badge-tag">🚌 Transport UPSSA</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="wa-express-actions">
+          <img id="expressQrThumb" src="" class="qr-thumb-preview" alt="QR Code" title="Aperçu QR Code">
+          <button class="btn-whatsapp" id="btnExpressSend">
+            <span>📲</span> Ouvrir WhatsApp & Marquer Envoyé ➔
+          </button>
+          <button class="btn btn-outline" id="btnExpressSkip" title="Passer au suivant sans envoyer">
+            Passer ⏩
+          </button>
+        </div>
+      </div>
+
+      <!-- Dispatch List Card -->
+      <div class="card">
+        <div class="card-title">
+          <div>
+            <span>Liste de Diffusion des 309 Étudiants</span>
+            <span style="font-size: 0.8rem; font-weight: normal; color: var(--gray-500); margin-left: 0.5rem;">
+              (<span id="waTableCount">309</span> affichés)
+            </span>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="table-controls">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              id="waSearchInput" 
+              placeholder="Rechercher par prénom, téléphone, pôle ou identifiant...">
+          </div>
+
+          <div class="filter-group">
+            <select id="waFilterStatus" class="select-filter">
+              <option value="all">Tous les états d'envoi</option>
+              <option value="pending" selected>⏳ En attente uniquement</option>
+              <option value="sent">✅ Déjà envoyés uniquement</option>
+            </select>
+
+            <select id="waFilterPole" class="select-filter">
+              <option value="all">Tous les Pôles</option>
+              <option value="Santé">Pôle Santé</option>
+              <option value="Sciences">Pôle Sciences</option>
+              <option value="Audit">Pôle Audit</option>
+            </select>
+
+            <select id="waFilterTransport" class="select-filter">
+              <option value="all">Transport (Tous)</option>
+              <option value="1">🚌 Avec transport (192)</option>
+              <option value="0">Sans transport</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- WhatsApp Table -->
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Étudiant</th>
+                <th>Pôle & Année</th>
+                <th>Téléphone WhatsApp</th>
+                <th>Transport</th>
+                <th>QR & Pass</th>
+                <th>Statut</th>
+                <th style="text-align: right;">Action WhatsApp</th>
+              </tr>
+            </thead>
+            <tbody id="waTableBody">
+              <!-- populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="waPagination" style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between;"></div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== WHATSAPP MESSAGE PREVIEW MODAL ==================== -->
+  <div id="waModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 620px;">
+      <div class="modal-header" style="background: #075e54; color: white;">
+        <div class="modal-title" style="color: white; display: flex; align-items: center; gap: 8px;">
+          <span>💬</span> Message Officiel WhatsApp — UPSSA ONBOARD
+        </div>
+        <button class="modal-close-btn" style="color: white;" onclick="window.closeWaModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem; background: #efeae2;">
+        <div class="wa-bubble" id="waModalBubble">
+          <!-- Text rendered dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer" style="background: white; display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn btn-outline" id="btnCopyWaModal">📋 Copier le Message</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-outline" onclick="window.closeWaModal()">Fermer</button>
+          <a id="btnOpenWaModal" href="#" target="_blank" class="btn-whatsapp">
+            📲 Ouvrir sur WhatsApp Web
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== INDIVIDUAL BADGE MODAL ==================== -->
+  <div id="badgeModal" class="modal-overlay">
+    <div class="modal-content print-area">
+      <div class="modal-header">
+        <div class="modal-title">Badge d'accès Étudiant</div>
+        <button class="modal-close-btn" onclick="window.closeBadgeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="badgeModalBody">
+        <!-- populated dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="window.closeBadgeModal()">Fermer</button>
+        <button class="btn btn-primary" id="btnPrintBadge">🖨️ Imprimer le Badge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <!-- 1. HTML5-QRCode Scanner Library (CDN with fallback) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- 2. Pure JS Offline QR Code Generator -->
+  <script src="js/qrcode.min.js"></script>
+
+  <!-- 3. Pre-loaded UPSSA Students Data (309 students from Excel) -->
+  <script src="js/data.js"></script>
+
+  <!-- 4. Application Logic -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Billet Officiel d'Accès — UPSSA ONBOARD 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0c2340;
+      --gold: #d4a017;
+      --gold-light: #fef3c7;
+      --accent-blue: #0284c7;
+      --green: #10b981;
+      --bg: #071526;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    body {
+      background: linear-gradient(135deg, #071526 0%, #0c2340 50%, #1e1b4b 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      color: var(--text);
+    }
+
+    .pass-container {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card-bg);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .pass-header {
+      background: linear-gradient(135deg, #0c2340 0%, #1e3a8a 100%);
+      color: white;
+      padding: 30px 24px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .univ-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: 8px;
+    }
+
+    .event-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--gold);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .event-sub {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 12px;
+    }
+
+    .event-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    .pass-body {
+      padding: 24px;
+      text-align: center;
+    }
+
+    .student-name {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .student-pole {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .badges-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .badge-chip {
+      flex: 1;
+      padding: 8px 4px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .badge-chip .label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .badge-chip .val {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge-chip.active {
+      background: #ecfdf5;
+    }
+    .badge-chip.active .val {
+      color: #059669;
+    }
+    .badge-chip.inactive {
+      background: #f8fafc;
+    }
+    .badge-chip.inactive .val {
+      color: #94a3b8;
+    }
+    .badge-chip.bus {
+      background: #eff6ff;
+    }
+    .badge-chip.bus .val {
+      color: #1d4ed8;
+    }
+
+    /* Cutout decoration */
+    .ticket-cutout {
+      position: relative;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 -24px;
+    }
+
+    .cutout-left, .cutout-right {
+      width: 24px;
+      height: 24px;
+      background: #0c2340;
+      border-radius: 50%;
+    }
+    .cutout-left { margin-left: -12px; }
+    .cutout-right { margin-right: -12px; }
+
+    .dashed-line {
+      flex: 1;
+      border-bottom: 2px dashed #e2e8f0;
+      margin: 0 10px;
+    }
+
+    .qr-container {
+      margin: 20px 0 16px;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: 20px;
+      border: 2px solid #e2e8f0;
+      display: inline-block;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+      min-width: 232px;
+    }
+
+    #qrCodeTarget {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+      margin: 0 auto;
+    }
+
+    #qrCodeTarget canvas, #qrCodeTarget img {
+      margin: 0 auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .access-code {
+      font-family: monospace;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--primary);
+      margin-top: 10px;
+    }
+
+    .access-sub {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+      font-family: monospace;
+    }
+
+    .attendance-status-banner {
+      display: none;
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .transport-alert {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-top: 16px;
+      text-align: left;
+      font-size: 12px;
+      color: #1e40af;
+      line-height: 1.4;
+    }
+
+    .warning-box {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #b91c1c;
+      font-weight: 600;
+      background: #fef2f2;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .pass-footer {
+      padding: 18px 24px 24px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #173b6c;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 16px;
+    }
+  </style>
+
+  <!-- 1. Offline student database fallback -->
+  <script src="js/data.js"></script>
+  <!-- 2. Pure JavaScript Offline QR Code Engine -->
+  <script src="js/qrcode.min.js"></script>
+</head>
+<body>
+
+  <div class="pass-container" id="passCard">
+    <div class="pass-header">
+      <div class="univ-tag">UPSSA • Student Life</div>
+      <h1 class="event-title">UPSSA ONBOARD</h1>
+      <div class="event-sub">Team Building & Soirée de Gala</div>
+      <div class="event-meta">
+        <span>📅 Mercredi 18 Nov. 2026</span>
+        <span>•</span>
+        <span>📍 Hyatt Place Taghazout</span>
+      </div>
+    </div>
+
+    <div class="pass-body">
+      <!-- Checked-in Live Badge -->
+      <div id="attendanceLiveBadge" class="attendance-status-banner">
+        ✓ Présence validée à l'accueil
+      </div>
+
+      <h2 class="student-name" id="studentName">Chargement...</h2>
+      <div class="student-pole" id="studentDetails">Pôle Santé • 1ère Année</div>
+
+      <div class="badges-row">
+        <div class="badge-chip" id="badgeGala">
+          <span class="label">Gala</span>
+          <span class="val" id="valGala">OUI</span>
+        </div>
+        <div class="badge-chip" id="badgeTb">
+          <span class="label">TeamBuilding</span>
+          <span class="val" id="valTb">OUI</span>
+        </div>
+        <div class="badge-chip" id="badgeBus">
+          <span class="label">Transport Bus</span>
+          <span class="val" id="valBus">OUI</span>
+        </div>
+      </div>
+
+      <div class="ticket-cutout">
+        <div class="cutout-left"></div>
+        <div class="dashed-line"></div>
+        <div class="cutout-right"></div>
+      </div>
+
+      <div class="qr-container">
+        <!-- Dynamic QR Code rendered by JavaScript -->
+        <div id="qrCodeTarget"></div>
+        <div class="access-code" id="accessCode">CODE : ----</div>
+        <div class="access-sub" id="accessSub"></div>
+      </div>
+
+      <p style="font-size: 12px; font-weight: 700; color: #0c2340;">
+        🎟️ Billet personnel obligatoire à l'entrée
+      </p>
+
+      <div class="transport-alert" id="transportBox">
+        <strong>🚌 Transport UPSSA réservé :</strong><br>
+        Rendez-vous à <strong>11h30</strong> au campus UPSSA pour un départ à <strong>12h00 précises</strong>.
+      </div>
+
+      <div class="warning-box">
+        ⚠️ Important : Ce billet est valable pour l'intégralité du programme. L'accès uniquement à la soirée ne sera pas autorisé.
+      </div>
+    </div>
+
+    <div class="pass-footer">
+      <a id="btnDownload" href="#" download="Mon_Pass_UPSSA.png" class="btn btn-primary">
+        📥 Télécharger mon Pass Image
+      </a>
+      <a href="https://maps.google.com/?q=Hyatt+Place+Taghazout+Bay" target="_blank" class="btn btn-secondary">
+        📍 Voir l'itinéraire Google Maps
+      </a>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Université Privée de Santé souss Almassira (UPSSA) • Tous droits réservés
+  </div>
+
+  <script>
+    (function() {
+      // 1. Détection de l'identifiant dans l'URL (ex: ?id=djuq3ke47o ou ?id=1002)
+      const urlParams = new URLSearchParams(window.location.search);
+      let queryId = (urlParams.get('id') || urlParams.get('code') || '1002').trim();
+
+      // Nettoyage éventuel du préfixe UPSSA:
+      if (queryId.toUpperCase().startsWith('UPSSA:')) {
+        queryId = queryId.substring(6).trim();
+      }
+
+      // 2. Fonction de recherche de l'étudiant
+      function findStudent(target) {
+        if (!target) return null;
+        const t = String(target).toLowerCase();
+        const list = window.INITIAL_STUDENTS || [];
+
+        // Correspondance directe par nouvel ID 4 chiffres (ex: 1002)
+        let match = list.find(s => s.id && String(s.id).toLowerCase() === t);
+        if (match) return match;
+
+        // Correspondance par ancien ID alphanumérique (ex: djuq3ke47o)
+        match = list.find(s => s.old_id && String(s.old_id).toLowerCase() === t);
+        if (match) return match;
+
+        // Correspondance par numéro de téléphone
+        const digits = t.replace(/\D/g, '');
+        if (digits.length >= 6) {
+          match = list.find(s => (s.phone || '').replace(/\D/g, '').endsWith(digits));
+          if (match) return match;
+        }
+
+        // Correspondance par nom
+        match = list.find(s => s.name && s.name.toLowerCase() === t);
+        if (match) return match;
+
+        return null;
+      }
+
+      // 3. Rendu visuel complet du billet
+      function renderStudent(data) {
+        if (!data) {
+          document.getElementById('studentName').innerText = "Billet non trouvé";
+          document.getElementById('studentDetails').innerText = `Identifiant "${queryId}" non répertorié.`;
+          return;
+        }
+
+        document.getElementById('studentName').innerText = data.name || "Étudiant(e)";
+        document.getElementById('studentDetails').innerText = `Pôle ${data.pole || 'UPSSA'} • ${data.year || ''}`;
+        
+        // Code à 4 chiffres
+        const code4 = data.id || data.code_4digit || '1002';
+        document.getElementById('accessCode').innerText = `CODE : ${code4}`;
+        
+        // Mention de l'ancien ID si applicable
+        const subEl = document.getElementById('accessSub');
+        if (data.old_id && data.old_id !== code4) {
+          subEl.innerText = `Réf : ${data.old_id}`;
+        } else {
+          subEl.innerText = '';
+        }
+
+        // Gala
+        const bGala = document.getElementById('badgeGala');
+        const vGala = document.getElementById('valGala');
+        if (data.gala) {
+          bGala.className = 'badge-chip active';
+          vGala.innerText = 'OUI';
+        } else {
+          bGala.className = 'badge-chip inactive';
+          vGala.innerText = 'NON';
+        }
+
+        // Teambuilding
+        const bTb = document.getElementById('badgeTb');
+        const vTb = document.getElementById('valTb');
+        if (data.teambuilding) {
+          bTb.className = 'badge-chip active';
+          vTb.innerText = 'OUI';
+        } else {
+          bTb.className = 'badge-chip inactive';
+          vTb.innerText = 'NON';
+        }
+
+        // Transport
+        const bBus = document.getElementById('badgeBus');
+        const vBus = document.getElementById('valBus');
+        const tBox = document.getElementById('transportBox');
+        if (data.transport) {
+          bBus.className = 'badge-chip bus';
+          vBus.innerText = 'OUI (11h30)';
+          tBox.style.display = 'block';
+        } else {
+          bBus.className = 'badge-chip inactive';
+          vBus.innerText = 'NON';
+          tBox.style.display = 'none';
+        }
+
+        // Badge de présence live
+        const liveBadge = document.getElementById('attendanceLiveBadge');
+        if (data.attended) {
+          liveBadge.style.display = 'block';
+          liveBadge.innerText = `✓ Présent validé à l'accueil (${data.scanned_time || 'OK'})`;
+        }
+
+        // 4. Génération dynamique du QR Code dans le DOM (100% hors ligne et instantané)
+        const targetContainer = document.getElementById('qrCodeTarget');
+        if (targetContainer) {
+          targetContainer.innerHTML = '';
+          if (window.QRCode) {
+            new window.QRCode(targetContainer, {
+              text: `UPSSA:${code4}`,
+              width: 200,
+              height: 200,
+              colorDark: "#0c2340",
+              colorLight: "#ffffff",
+              correctLevel: window.QRCode.CorrectLevel.M
+            });
+          }
+        }
+
+        // Liens de téléchargement du pass
+        const btnDownload = document.getElementById('btnDownload');
+        if (btnDownload) {
+          btnDownload.href = `/passes/${code4}.png`;
+          btnDownload.download = `Pass_UPSSA_${data.name}_${code4}.png`;
+        }
+      }
+
+      // ÉTAPE 1 : Rendu immédiat et sans latence depuis les données locales
+      const localStudent = findStudent(queryId);
+      if (localStudent) {
+        renderStudent(localStudent);
+      }
+
+      // ÉTAPE 2 : Vérification réseau en arrière-plan pour synchroniser le statut de présence live
+      const endpoints = [
+        `/api/student?id=${encodeURIComponent(queryId)}`,
+        `http://localhost:8080/api/student?id=${encodeURIComponent(queryId)}`
+      ];
+
+      function tryFetch(urls) {
+        if (!urls.length) return;
+        const url = urls[0];
+        fetch(url)
+          .then(res => res.ok ? res.json() : Promise.reject())
+          .then(serverData => {
+            if (serverData && serverData.id) {
+              renderStudent(serverData);
+            }
+          })
+          .catch(() => {
+            tryFetch(urls.slice(1));
+          });
+      }
+
+      tryFetch(endpoints);
+
+    })();
+  </script>
+</body>
+</html>
