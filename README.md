@@ -6,6 +6,15 @@ Il intègre une **base de données SQL (SQLite)**, un **générateur de vrais QR
 
 ---
 
+## 🌐 Liens de Déploiement en Ligne
+
+- **Application en Production (Fly.io) :** [https://upssa-qr-presence.fly.dev/](https://upssa-qr-presence.fly.dev/)
+- **Exemple de Billet d'accès étudiant :** [https://upssa-qr-presence.fly.dev/ticket?id=1002](https://upssa-qr-presence.fly.dev/ticket?id=1002)
+- **Tableau de bord Fly.io :** [https://fly.io/dashboard/kan-kantim](https://fly.io/dashboard/kan-kantim)
+- **Dépôt GitHub :** [https://github.com/rahmouniinfos92-gif/upssa-qr-presence](https://github.com/rahmouniinfos92-gif/upssa-qr-presence)
+
+---
+
 ## 🚀 Démarrage Rapide
 
 ### 1. Lancer l'Application & la Base SQL
